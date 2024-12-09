@@ -1,11 +1,12 @@
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
+from apache_beam.runners.direct import direct_runner
 import requests
 import json
 
 class FetchDataFromAPI(beam.DoFn):
     def process(self, element):
-        url = 'http://127.0.0.1:5003/data'
+        url = 'http://34.132.24.214/data'
         response = requests.get(url, stream=True)
         for line in response.iter_lines():
             if line:
@@ -32,14 +33,7 @@ class NormalizeAndRound(beam.DoFn):
         yield element
 
 def run_pipeline():
-    options = PipelineOptions(
-        flags=None,
-        runner='DataflowRunner',
-        project='k8ss-441616',
-        region='us-central1',
-        temp_location='gs://cloud-computing-job123/temp/',
-        staging_location='gs://cloud-computing-job123/staging/'
-    )
+    options = direct_runner.DirectRunner()
     
     with beam.Pipeline(options=options) as pipeline:
         (
