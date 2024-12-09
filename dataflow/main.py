@@ -1,47 +1,70 @@
+import os
+from pathlib import Path
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
-from apache_beam.runners.direct import direct_runner
-import requests
+from apache_beam.io.gcp.pubsub import ReadFromPubSub as BeamPubSub
+from apache_beam.io.gcp.bigquery import WriteToBigQuery as BeamBigQuery
+from apache_beam.transforms.window import FixedWindows
+from google.cloud import pubsub_v1
 import json
 
-class FetchDataFromAPI(beam.DoFn):
-    def process(self, element):
-        url = 'http://34.132.24.214/data'
-        response = requests.get(url, stream=True)
-        for line in response.iter_lines():
-            if line:
-                decoded_line = line.decode('utf-8')
-                if decoded_line.startswith('data:'):
-                    json_str = decoded_line[5:]
-                    json_str = json_str.replace("'", '"')
-                    try:
-                        data = json.loads(json_str)
-                        yield data
-                    except json.JSONDecodeError as e:
-                        print(f"Error decoding JSON: {e}")
-                        continue
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path(__file__).parent.parent / 'mlops-gcs.json')
+PROJECT_ID = 'k8ss-441616'
+REGION = 'us-central1'
+BIGQUERY_TABLE = 'k8ss-441616.mlops_project.data'
+SUBSCRIPTION_IDS = ['mlops-sub-1', 'mlops-sub-2', 'mlops-sub-3', 'mlops-sub-4', 'mlops-sub-5']
+TMP_BUCKET = 'gs://dataflow-apache-quickstart_k8ss-441616/temp/'
+subscriber = pubsub_v1.SubscriberClient()
 
 class NormalizeAndRound(beam.DoFn):
     def process(self, element):
+        if isinstance(element, beam.io.gcp.pubsub.PubsubMessage):
+            try:
+                element = json.loads(element.data.decode('utf-8'))
+            except json.JSONDecodeError:
+                return
+
         element.pop('timestamp', None)
+
         normalized_y = (element['y'] - 0) / (10 - 0)
         normalized_x = (element['x'] - 0) / (10 - 0)
+        
         element['x'] = round(element['x'], 2)
         element['y'] = round(element['y'], 2)
         element['normalized_x'] = round(normalized_x, 2)
         element['normalized_y'] = round(normalized_y, 2)
+        print(element)
         yield element
 
 def run_pipeline():
-    options = direct_runner.DirectRunner()
-    
-    with beam.Pipeline(options=options) as pipeline:
-        (
+    beam_options = PipelineOptions([
+        '--runner=DataflowRunner',
+        f'--region={REGION}',
+        f'--project={PROJECT_ID}',
+        f'--temp_location={TMP_BUCKET}',
+        '--streaming'
+    ])
+
+    with beam.Pipeline(options=beam_options) as pipeline:
+        messages = (
             pipeline
-            | 'Start Streaming Data' >> beam.Create([None])
-            | 'Fetch Data from API' >> beam.ParDo(FetchDataFromAPI())
+            | 'Read from PubSub' >> BeamPubSub(
+                subscription=subscriber.subscription_path(PROJECT_ID, SUBSCRIPTION_IDS[-1]),
+                with_attributes=True
+            )
+            | 'Window into Fixed Intervals' >> beam.WindowInto(FixedWindows(60))
+        )
+
+        processed_data = (
+            messages
             | 'Normalize and Round Data' >> beam.ParDo(NormalizeAndRound())
-            | 'Print Results' >> beam.Map(print)
+        )
+
+        processed_data | 'Write to BigQuery' >> BeamBigQuery(
+            table=BIGQUERY_TABLE,
+            schema='x:FLOAT,y:FLOAT',
+            create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
+            write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
         )
 
 if __name__ == '__main__':

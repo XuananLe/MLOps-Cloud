@@ -6,8 +6,8 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path(__file__).parent.parent 
 
 PROJECT_ID = 'k8ss-441616'
 TOPIC_ID = 'mlops'
-SUBSCRIPTION_ID = 'mlops-sub'
-MESSAGE_COUNT = 1000000000000
+SUBSCRIPTION_ID = 'mlops-sub-5'
+MESSAGE_COUNT = 100
 
 def main():
     subscriber = pubsub_v1.SubscriberClient()
