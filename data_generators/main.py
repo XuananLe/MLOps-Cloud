@@ -19,6 +19,9 @@ def generate_data():
 @app.route('/data')
 def sse_stream():
     return Response(generate_data(), content_type='text/event-stream')
+@app.route('/')
+def index():
+    return "Data generator server is running..., go to /data to get data."
 
 if __name__ == '__main__':
     print("Starting data generator server...")
