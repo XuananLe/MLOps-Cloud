@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gcr.io_k8ss-441616_yolov9s
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gcr.io_k8ss-441616_yolov9s
+  template:
+    metadata:
+      labels:
+        app: gcr.io_k8ss-441616_yolov9s
+    spec:
+      containers:
+        - name: gcr.io_k8ss-441616_yolov9s
+          image: gcr.io/k8ss-441616/yolov9s
+          command:
+            - "sh"
+            - "-c"
+            - "echo 'Container started and image is pulled'"
+          ports:
+            - containerPort: 1509
+          volumeMounts:
+            - name: model-volume
+              mountPath: /models
+      volumes:
+        - name: model-volume
+          emptyDir: {}

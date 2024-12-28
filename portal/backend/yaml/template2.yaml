@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{deployment_name}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{deployment_name}}
+  template:
+    metadata:
+      labels:
+        app: {{deployment_name}}
+    spec:
+      containers:
+        - name: {{deployment_name}}
+          image: {{image_url}}
+#          command:
+#            - "sh"
+#            - "-c"
+#            - "echo 'Container started and image is pulled'"
+          ports:
+            - containerPort: {{port}}
+          volumeMounts:
+            - name: model-volume
+              mountPath: /models
+      volumes:
+        - name: model-volume
+          emptyDir: {}

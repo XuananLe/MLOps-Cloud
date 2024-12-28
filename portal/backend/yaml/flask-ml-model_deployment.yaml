@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-ml-model
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-ml-model
+  template:
+    metadata:
+      labels:
+        app: flask-ml-model
+    spec:
+      containers:
+        - name: flask-ml-model
+          image: quy23/flask-ml-model:latest
+#          command:
+#            - "sh"
+#            - "-c"
+#            - "echo 'Container started and image is pulled'"
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: model-volume
+              mountPath: /models
+      volumes:
+        - name: model-volume
+          emptyDir: {}
