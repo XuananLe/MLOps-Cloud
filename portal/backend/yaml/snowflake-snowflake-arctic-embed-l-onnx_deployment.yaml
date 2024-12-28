@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: snowflake-snowflake-arctic-embed-l-onnx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: snowflake-snowflake-arctic-embed-l-onnx
+  template:
+    metadata:
+      labels:
+        app: snowflake-snowflake-arctic-embed-l-onnx
+    spec:
+      containers:
+        - name: snowflake-snowflake-arctic-embed-l-onnx
+          image: semitechnologies/transformers-inference:snowflake-snowflake-arctic-embed-l-onnx
+#          command:
+#            - "sh"
+#            - "-c"
+#            - "echo 'Container started and image is pulled'"
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: model-volume
+              mountPath: /models
+      volumes:
+        - name: model-volume
+          emptyDir: {}

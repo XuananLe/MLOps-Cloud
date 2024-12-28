@@ -1,0 +1,46 @@
+[[pages]]
+path = "pages/homepage.py"
+name = "MLOps on GCP"
+url_path = "homepage"
+icon = "🏠"
+
+[[pages]]
+path = "pages/create.py"
+name = "Create a new deployment"
+url_path = "create"
+icon = "🚀"
+
+[[pages]]
+path = "pages/pipeline.py"
+name = "Configure MLOps pipelines"
+url_path = "pipeline"
+icon = "🛠️"
+
+[[pages]]
+path = "pages/detail.py"
+name = "View deployment details"
+url_path = "detail"
+icon = "📊"
+
+
+
+#[[pages]]
+#path = "pages/create.py"
+#name = "Create a new deployment"
+#url_path = "create"
+#icon = "➕"
+#
+#
+#
+#[[pages]]
+#path = "pages/list.py"
+#name = "List deployments"
+#url_path = "list"
+#icon = "📋"
+#
+#
+#[[pages]]
+#path = "pages/detail.py"
+#name = "Detail deployment"
+#url_path = "detail"
+#icon = "📊"
